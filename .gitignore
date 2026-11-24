@@ -1,0 +1,14 @@
+# --- Données personnelles : ne JAMAIS publier ---
+# comptes, mots de passe (empreintes), prospects, réglages Gmail, Excel
+donnees/
+sorties/
+parametres_envoi.ini
+desinscrits.txt
+selection_envoi.json
+*.xlsx
+*.db
+
+# --- Fichiers techniques ---
+__pycache__/
+*.pyc
+.claude/

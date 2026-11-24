@@ -1,0 +1,20 @@
+Objet: {entreprise} — aide prévention de l'Assurance Maladie (jusqu'à 8 235 €)
+{bonjour}
+
+Je me permets de vous écrire au sujet d'une aide de l'Assurance Maladie pour les entreprises {du_secteur} qui forment un de leurs salariés à la prévention. Elle peut aller jusqu'à 8 235 €, sous conditions, et la plupart des dirigeants ne la demandent pas.
+
+Concrètement, le cabinet ERGOVA s'occupe de tout :
+- former un de vos salariés comme référent prévention ;
+- créer ou mettre à jour votre document unique (DUERP) ;
+- monter et déposer le dossier d'aide pour vous.
+
+Vous n'avez rien à avancer : notre accompagnement n'est facturé qu'après le versement de l'aide, et si elle est refusée, vous ne payez rien. L'aide n'est accordée qu'une fois par entreprise et le dispositif s'arrête en 2027.
+
+Pour savoir en 2 minutes si {entreprise} y a droit, répondez simplement à cet e-mail avec le meilleur moment pour vous appeler, ou appelez-moi au {telephone}.
+
+Bien cordialement,
+{prenom_nom}
+Cabinet ERGOVA — {telephone}
+
+--
+ERGOVA est un cabinet privé, indépendant de l'Assurance Maladie. Vous recevez ce message car votre entreprise figure dans l'annuaire public des entreprises (INSEE). Pour ne plus recevoir de messages de notre part, répondez simplement « STOP ».

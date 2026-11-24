@@ -1,0 +1,37 @@
+# SCRIPT D'APPEL ERGOVA (version courte)
+But : faire le diagnostic pendant l'appel, puis récupérer l'e-mail pour envoyer le formulaire.
+
+# 1. STANDARD
+« Bonjour, [Prénom] d'ERGOVA. Je voudrais parler au gérant, s'il vous plaît. C'est au sujet de l'aide prévention de l'Assurance Maladie pour les entreprises du [secteur]. »
+C'est pour quoi ? → « Une aide qui peut aller jusqu'à 8 235 € pour l'entreprise. J'ai deux questions à lui poser pour savoir s'il y a droit. »
+Il n'est pas là → « Je le rappelle à quelle heure ? »
+
+# 2. ACCROCHE (au dirigeant)
+« Bonjour M./Mme [Nom], [Prénom] du cabinet ERGOVA. L'Assurance Maladie verse jusqu'à 8 235 € aux entreprises du [secteur] qui forment un de leurs salariés à la prévention. Et la plupart des dirigeants ne la demandent pas. On forme un de vos salariés comme référent prévention, on crée ou met à jour votre document unique, et on monte le dossier d'aide pour vous. Vous n'avez rien à avancer. Je vous pose deux ou trois questions pour voir si vous y avez droit ? »
+S'il hésite : « Depuis juin, ne pas avoir de document unique peut coûter jusqu'à 4 000 € par salarié en cas de contrôle. Autant le faire pendant que c'est financé. »
+
+# 3. DIAGNOSTIC
+1. Vous êtes combien dans l'entreprise ?
+2. Vos équipes portent des charges, ont des postures difficiles ou utilisent des machines qui vibrent ?
+3. Quelqu'un est en CDI à temps plein et connaît bien le terrain ? C'est qui ?
+4. Vous avez déjà demandé une subvention prévention à l'Assurance Maladie ?
+5. Vous êtes à jour de vos cotisations URSSAF et vous avez une médecine du travail ?
+Éligible si : secteur cible + un CDI à temps plein + aide jamais demandée + à jour URSSAF.
+
+# 4. CONCLUSION
+« Vous n'avez rien à avancer. Je vous envoie un petit formulaire par e-mail, ça prend 5 minutes. Quelle est la meilleure adresse e-mail pour vous ? »
+Faites épeler l'e-mail, prenez le portable, envoyez le formulaire pendant l'appel.
+Pas le temps : « On fait le point 10 minutes demain 8 h 30 ou jeudi 13 h ? »
+
+# OBJECTIONS
+Pas le temps → « Juste une question : votre document unique est à jour ? »
+Pas intéressé → « Pas intéressé par la mise en règle, ou par l'aide ? »
+On a déjà un DUERP → « Il date de quand ? L'aide demande un document à jour. Et vous avez un salarié référent prévention ? »
+Ça coûte combien → « Rien à avancer. Accompagnement complet 6 000 €, facturé seulement après le versement de l'aide (jusqu'à 8 235 €). Si l'aide est refusée, vous ne payez rien. »
+C'est une arnaque → « Vous avez raison de vous méfier. ERGOVA est un cabinet privé. L'aide est réelle : cherchez « subvention prévention des risques ergonomiques » sur le site de l'Assurance Maladie. »
+Je n'ai personne pour être référent → « Ce n'est pas un poste en plus. C'est souvent un chef d'équipe. »
+Je vais réfléchir → « Le formulaire prend 5 minutes et ne vous engage à rien. »
+Rappelez-moi l'an prochain → « L'aide n'est accordée qu'une fois par entreprise, et le dispositif s'arrête en 2027. »
+
+# À NE JAMAIS DIRE
+« Vous allez toucher 8 235 € », « toutes les entreprises sont éligibles », « je viens de la part de l'Assurance Maladie ». Toujours « jusqu'à » et « sous conditions ».

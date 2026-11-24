@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERGOVA Prospection</title>
+<style>
+:root{
+  --bg:#f4f6f9; --surface:#fff; --surface2:#f8fafc; --border:#e3e8ef; --text:#1a2233; --muted:#64708a;
+  --primary:#1f4fd1; --primary-ink:#fff; --primary-soft:#e8eefc;
+  --ok:#17803d; --ok-soft:#e3f5e9; --warn:#a15c00; --warn-soft:#fff3d6; --bad:#b42318; --bad-soft:#fde8e6;
+  --gris-soft:#eef1f5; --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f141c; --surface:#171d27; --surface2:#1c2330; --border:#2a3342; --text:#e6eaf1; --muted:#97a2b6;
+    --primary:#6b8ff7; --primary-ink:#0b1020; --primary-soft:#1f2a45;
+    --ok:#4ecb7a; --ok-soft:#173324; --warn:#f0b54a; --warn-soft:#3a2e15; --bad:#f2786c; --bad-soft:#3d1d1a;
+    --gris-soft:#232b38; --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--primary)}
+header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.barre{max-width:1400px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:28px;height:58px}
+.logo{font-weight:700;font-size:17px;letter-spacing:.3px;display:flex;align-items:center;gap:9px;white-space:nowrap}
+.logo span{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;background:var(--primary);color:var(--primary-ink);font-size:15px}
+nav{display:flex;gap:4px;height:100%;overflow-x:auto}
+nav button{background:none;border:0;padding:0 14px;cursor:pointer;color:var(--muted);font-weight:600;border-bottom:2px solid transparent;white-space:nowrap}
+nav button.actif{color:var(--text);border-bottom-color:var(--primary)}
+nav .pastille{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;line-height:18px;text-align:center}
+.tache-mini{margin-left:auto;font-size:12.5px;color:var(--muted);display:none;align-items:center;gap:8px;white-space:nowrap}
+.tache-mini.visible{display:flex}
+main{max-width:1400px;margin:0 auto;padding:22px 20px 60px}
+.onglet{display:none}.onglet.actif{display:block}
+h1{font-size:21px;margin:0 0 4px}h2{font-size:16px;margin:0 0 12px}
+.sous{color:var(--muted);margin:0 0 20px}
+.carte{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--shadow)}
+.grille2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px}
+@media (max-width:900px){.grille2{grid-template-columns:1fr}}
+label.champ{display:block;font-weight:600;font-size:13px;margin:0 0 6px}
+input[type=text],input[type=number],input[type=email],input[type=password],input[type=date],select,textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+textarea{resize:vertical;min-height:80px}
+.ligne{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}.ligne>*{flex:1;min-width:140px}
+.espace{height:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-weight:600;text-decoration:none;color:var(--text);white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn.principal{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.btn.principal:hover{filter:brightness(1.07)}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.petit{padding:6px 11px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.puces{display:flex;flex-wrap:wrap;gap:8px}
+.puce{position:relative}
+.puce input{position:absolute;opacity:0}
+.puce span{display:inline-block;padding:7px 13px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:var(--surface2);font-weight:500}
+.puce input:checked+span{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.puce input:focus-visible+span{outline:2px solid var(--primary)}
+.bascule{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.bascule button{border:0;background:var(--surface2);padding:7px 14px;cursor:pointer;font-weight:600;color:var(--muted)}
+.bascule button.actif{background:var(--primary);color:var(--primary-ink)}
+.console{background:#0e1320;color:#cfe0ff;border-radius:10px;padding:12px 14px;font:12.5px/1.55 Consolas,"Cascadia Mono",monospace;height:330px;overflow:auto;white-space:pre-wrap}
+.console .ok{color:#7ee2a0}.console .titre{color:#fff;font-weight:700}
+.etat{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-weight:600}
+.rond{width:10px;height:10px;border-radius:50%;background:var(--muted)}
+.rond.tourne{background:var(--warn);animation:pulse 1s infinite}.rond.fini{background:var(--ok)}.rond.erreur{background:var(--bad)}
+@keyframes pulse{50%{opacity:.35}}
+.tuiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.tuile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.tuile .val{font-size:26px;font-weight:700;line-height:1.1}
+.tuile .lib{color:var(--muted);font-size:12.5px;margin-top:3px}
+.filtres{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.filtres select,.filtres input[type=text]{width:auto;min-width:150px}
+.filtres .recherche{flex:1;min-width:200px}
+.case{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted);font-weight:500;white-space:nowrap}
+.table-boite{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:auto;box-shadow:var(--shadow);max-height:calc(100vh - 330px);min-height:300px}
+table{width:100%;border-collapse:collapse}
+th{position:sticky;top:0;background:var(--surface2);text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--surface2)}
+tbody tr.choisi{background:var(--primary-soft)}
+.nom{font-weight:600}.petit-gris{color:var(--muted);font-size:12.5px}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12px;font-weight:700}
+.prio-A{background:var(--ok-soft);color:var(--ok)}.prio-B{background:var(--warn-soft);color:var(--warn)}.prio-C{background:var(--gris-soft);color:var(--muted)}
+.statut{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;background:var(--gris-soft);color:var(--muted);white-space:nowrap}
+.st-bon{background:var(--ok-soft);color:var(--ok)}.st-attente{background:var(--warn-soft);color:var(--warn)}.st-non{background:var(--bad-soft);color:var(--bad)}.st-envoye{background:var(--primary-soft);color:var(--primary)}
+.vide{padding:50px 20px;text-align:center;color:var(--muted)}
+.tiroir{position:fixed;top:0;right:0;height:100vh;width:min(520px,100vw);background:var(--surface);border-left:1px solid var(--border);box-shadow:-8px 0 30px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .2s;z-index:40;display:flex;flex-direction:column}
+.tiroir.ouvert{transform:none}
+.tiroir-tete{padding:18px 20px 12px;border-bottom:1px solid var(--border)}
+.tiroir-corps{padding:16px 20px 30px;overflow:auto;flex:1}
+.fermer{float:right;background:none;border:0;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.infos{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13.5px;margin-bottom:14px}
+.infos dt{color:var(--muted)}.infos dd{margin:0;word-break:break-word}
+.encadre{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13.5px;white-space:pre-wrap}
+details{margin-top:14px}details summary{cursor:pointer;font-weight:600;padding:6px 0}
+.voile{position:fixed;inset:0;background:rgba(10,15,25,.35);z-index:35;display:none}.voile.visible{display:block}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1a2233;color:#fff;padding:10px 18px;border-radius:9px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;font-weight:500}
+.toast.visible{opacity:1}
+.alerte{padding:11px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-weight:500;margin-bottom:14px}
+.alerte.info{background:var(--primary-soft);color:var(--primary)}
+.liste-zones{display:flex;flex-direction:column;gap:8px}
+.zone-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface2);cursor:pointer}
+.zone-item:hover{border-color:var(--primary)}
+.jauge{height:8px;background:var(--gris-soft);border-radius:5px;overflow:hidden;margin-top:8px}
+.jauge div{height:100%;background:var(--primary)}
+.dialogue{position:fixed;inset:0;display:none;place-items:center;z-index:70;background:rgba(10,15,25,.45)}
+.dialogue.visible{display:grid}
+.dialogue .carte{max-width:440px;width:calc(100% - 32px)}
+.ecran-connexion{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-items:center;padding:16px;overflow:auto}
+.ecran-connexion .carte{width:100%;max-width:400px}
+.ecran-connexion h1{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.erreur-form{color:var(--bad);font-weight:600;min-height:20px;margin:8px 0 0}
+.compte-menu{display:flex;align-items:center;gap:10px;margin-left:auto;white-space:nowrap}
+.compte-menu .qui{font-weight:600;font-size:13px}
+.tache-mini{margin-left:0}
+@media (max-width:640px){.compte-menu .qui{display:none}}
+@media (max-width:640px){.barre{gap:12px;padding:0 12px}.logo b{display:none}main{padding:16px 12px 50px}.table-boite{max-height:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="barre">
+    <div class="logo"><span>E</span><b>ERGOVA Prospection</b></div>
+    <nav>
+      <button data-onglet="rechercher" class="actif">Rechercher</button>
+      <button data-onglet="prospects">Prospects <span class="pastille" id="pastilleRappels" hidden></span></button>
+      <button data-onglet="emails">E-mails</button>
+      <button data-onglet="reglages">Réglages</button>
+    </nav>
+    <div class="compte-menu">
+      <div class="tache-mini" id="tacheMini"><div class="rond tourne"></div><span id="tacheMiniTxt">Recherche en cours…</span></div>
+      <span class="qui" id="quiConnecte"></span>
+      <button class="btn petit" id="btnDeconnexion">Se déconnecter</button>
+    </div>
+  </div>
+</header>
+
+<!-- Connexion / création de compte -->
+<div class="ecran-connexion" id="ecranConnexion" hidden>
+  <div class="carte">
+    <h1><span class="logo"><span>E</span></span><span id="cnxTitre">Connexion</span></h1>
+    <p class="sous" id="cnxSous">Connecte-toi à ton compte ERGOVA Prospection.</p>
+    <form id="formConnexion" autocomplete="on">
+      <div id="cnxBlocNom" hidden>
+        <label class="champ" for="cnxNom">Ton prénom et nom</label>
+        <input type="text" id="cnxNom" placeholder="ex : Karim Benali" autocomplete="name">
+        <div class="espace"></div>
+      </div>
+      <label class="champ" for="cnxIdent">Identifiant</label>
+      <input type="text" id="cnxIdent" placeholder="ex : karim" autocomplete="username" autocapitalize="none" spellcheck="false">
+      <div class="espace"></div>
+      <label class="champ" for="cnxMdp">Mot de passe</label>
+      <input type="password" id="cnxMdp" autocomplete="current-password">
+      <p class="petit-gris" id="cnxAide" hidden>Choisis un mot de passe pour l'application (6 caractères minimum). Ce n'est <b>pas</b> ton mot de passe Gmail.</p>
+      <p class="erreur-form" id="cnxErreur"></p>
+      <button class="btn principal" type="submit" id="cnxBouton" style="width:100%">Se connecter</button>
+    </form>
+    <p class="petit-gris" style="text-align:center;margin-bottom:0"><a href="#" id="cnxBascule">Créer un nouveau compte</a></p>
+  </div>
+</div>
+
+<main>
+<!-- ===================== RECHERCHER ===================== -->
+<section class="onglet actif" id="onglet-rechercher">
+  <h1>Trouver des prospects</h1>
+  <p class="sous">Entreprises avec au moins 1 salarié, avec téléphone et e-mail quand ils sont trouvables gratuitement.</p>
+  <div class="grille2">
+    <div class="carte">
+      <div class="bascule" id="basculeZone">
+        <button class="actif" data-mode="ville">Ville</button><button data-mode="departement">Département</button>
+      </div>
+      <div class="ligne">
+        <div id="blocVille"><label class="champ" for="ville">Ville</label><input type="text" id="ville" placeholder="ex : Dijon" autocomplete="off"></div>
+        <div id="blocDep" hidden><label class="champ" for="departement">N° de département</label><input type="text" id="departement" placeholder="ex : 21" maxlength="3"></div>
+        <div style="max-width:170px"><label class="champ" for="limite">Nombre de prospects</label><input type="number" id="limite" value="200" min="10" max="5000" step="10"></div>
+      </div>
+      <div class="espace"></div>
+      <label class="champ">Secteurs</label>
+      <div class="puces" id="puces"></div>
+      <div class="espace"></div>
+      <label class="case"><input type="checkbox" id="nouveaux"> Uniquement des entreprises jamais trouvées avant</label>
+      <div class="espace"></div>
+      <button class="btn principal" id="btnLancer">▶ Lancer la recherche</button>
+      <span class="petit-gris" style="margin-left:10px">Dijon : 2 à 6 min · Paris : 10 à 15 min la 1re fois</span>
+    </div>
+    <div class="carte">
+      <div class="etat"><div class="rond" id="rond"></div><span id="etatTxt">Prêt</span><span class="petit-gris" id="chrono" style="margin-left:auto"></span></div>
+      <div class="console" id="console">Le déroulement de la recherche s'affichera ici.</div>
+      <div class="espace"></div>
+      <button class="btn principal" id="btnVoir" hidden>Voir les prospects →</button>
+    </div>
+  </div>
+  <div class="espace"></div>
+  <div class="carte">
+    <h2>Recherches précédentes</h2>
+    <div class="liste-zones" id="listeZones"></div>
+  </div>
+</section>
+
+<!-- ===================== PROSPECTS ===================== -->
+<section class="onglet" id="onglet-prospects">
+  <div class="ligne" style="align-items:center;margin-bottom:14px">
+    <div style="flex:0 1 auto;min-width:0"><h1 style="margin:0">Prospects</h1></div>
+    <div style="flex:0 1 220px"><select id="zone" aria-label="Zone"></select></div>
+    <div style="flex:1"></div>
+    <div style="flex:0 0 auto;display:flex;gap:8px"><a class="btn principal" id="btnTelecharger" href="#" download>⤓ Télécharger l'Excel</a><button class="btn" id="btnExcel">Ouvrir dans Excel</button></div>
+  </div>
+  <div class="tuiles" id="tuiles"></div>
+  <div class="filtres">
+    <input type="text" class="recherche" id="fRecherche" placeholder="Rechercher une entreprise, un dirigeant…">
+    <select id="fSecteur"><option value="">Tous les secteurs</option></select>
+    <select id="fPrio"><option value="">Toutes priorités</option><option>A</option><option>B</option><option>C</option></select>
+    <select id="fStatut"><option value="">Tous les statuts</option><option value="__rappel">À rappeler aujourd'hui</option></select>
+    <label class="case"><input type="checkbox" id="fTel"> Avec téléphone</label>
+    <label class="case"><input type="checkbox" id="fMail"> Avec e-mail</label>
+  </div>
+  <div class="table-boite">
+    <table>
+      <thead><tr>
+        <th data-tri="priorite">Prio.</th><th data-tri="entreprise">Entreprise</th><th data-tri="dirigeant">Dirigeant</th>
+        <th data-tri="tranche">Effectif</th><th data-tri="telephone">Téléphone</th><th data-tri="email">E-mail</th>
+        <th data-tri="statut">Statut</th><th data-tri="rappel_le">Rappel</th>
+      </tr></thead>
+      <tbody id="corpsTable"></tbody>
+    </table>
+    <div class="vide" id="videTable" hidden>Aucun prospect. Lance une recherche dans l'onglet « Rechercher ».</div>
+  </div>
+  <p class="petit-gris" id="compteur"></p>
+</section>
+
+<!-- ===================== E-MAILS ===================== -->
+<section class="onglet" id="onglet-emails">
+  <h1>E-mails de prospection</h1>
+  <p class="sous">Un e-mail par adresse, jamais deux fois. Les « STOP » et les statuts « Pas intéressé », « Client »… sont exclus automatiquement.</p>
+  <div class="tuiles" id="tuilesEmails"></div>
+  <div id="alerteReglages" class="alerte" hidden>Avant d'envoyer, remplis l'onglet <a href="#" data-aller="reglages">Réglages</a>.</div>
+  <div id="alerteMdp" class="alerte" style="background:var(--bad-soft);color:var(--bad)" hidden></div>
+  <div class="carte">
+    <h2>1. Choisis les destinataires</h2>
+    <div class="filtres">
+      <select id="dZone" aria-label="Zone"></select>
+      <select id="dSecteur" aria-label="Secteur"><option value="">Tous les secteurs</option></select>
+      <select id="dPrio" aria-label="Priorité"><option value="">Toutes priorités</option><option>A</option><option>B</option><option>C</option></select>
+      <input type="text" class="recherche" id="dRecherche" placeholder="Rechercher…">
+    </div>
+    <div class="actions" style="margin-top:0">
+      <button class="btn petit" id="dTout">Tout cocher (affichés)</button>
+      <button class="btn petit" id="dRien">Tout décocher</button>
+      <button class="btn petit" id="d30">Cocher les 30 premiers</button>
+    </div>
+    <div class="table-boite" style="max-height:380px;min-height:0;box-shadow:none">
+      <table><thead><tr><th style="width:36px"><input type="checkbox" id="dCaseTout" aria-label="Tout cocher"></th><th>Prio.</th><th>Entreprise</th><th>Dirigeant</th><th>E-mail</th><th>Zone</th></tr></thead>
+      <tbody id="corpsDest"></tbody></table>
+      <div class="vide" id="videDest" hidden>Aucun destinataire disponible : tous ont déjà reçu un e-mail, ou aucun prospect n'a d'e-mail.</div>
+    </div>
+    <p class="petit-gris" id="dCompteur"></p>
+  </div>
+  <div class="espace"></div>
+  <div class="grille2">
+    <div class="carte">
+      <h2>2. Envoie</h2>
+      <div class="alerte info">Conseil : commence par 30 à 50 e-mails par jour, puis augmente sur 2 à 3 semaines. Envoyer 500 e-mails dès le premier jour fait souvent bloquer le compte Gmail.</div>
+      <button class="btn principal" id="btnEnvoyer">✉ Envoyer aux 0 sélectionnés</button>
+      <p class="petit-gris">Une pause de 20 à 60 secondes est faite entre chaque e-mail pour ne pas être pris pour du spam. 30 e-mails ≈ 20 minutes.</p>
+      <div class="etat"><div class="rond" id="rondEnvoi"></div><span id="etatEnvoi">Aucun envoi en cours</span></div>
+      <div class="console" id="consoleEnvoi" style="height:200px">Le suivi des envois s'affichera ici.</div>
+    </div>
+    <div class="carte">
+      <h2>Modèle de l'e-mail</h2>
+      <p class="petit-gris" style="margin-top:-6px">Variables : {entreprise} {bonjour} {du_secteur} {prenom_nom} {telephone}. La 1re ligne est l'objet.</p>
+      <textarea id="modeleEmail" style="min-height:300px;font-size:13px"></textarea>
+      <div class="actions"><button class="btn principal" id="btnModele">Enregistrer le modèle</button><button class="btn" id="btnApercuModele">Aperçu sur un prospect</button></div>
+    </div>
+  </div>
+  <div class="espace"></div>
+  <div class="carte">
+    <h2>Derniers e-mails envoyés</h2>
+    <div class="table-boite" style="max-height:340px;min-height:0;box-shadow:none">
+      <table><thead><tr><th>Date</th><th>Destinataire</th><th>Objet</th></tr></thead><tbody id="corpsEnvois"></tbody></table>
+      <div class="vide" id="videEnvois">Aucun e-mail envoyé pour l'instant.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RÉGLAGES ===================== -->
+<section class="onglet" id="onglet-reglages">
+  <h1>Réglages</h1>
+  <p class="sous">Ces informations restent sur ton ordinateur.</p>
+  <div class="grille2">
+    <div class="carte">
+      <h2>Expéditeur des e-mails</h2>
+      <div class="ligne">
+        <div><label class="champ" for="pNom">Prénom et nom</label><input type="text" id="pNom" placeholder="ex : Karim Benali"></div>
+        <div><label class="champ" for="pTel">Téléphone</label><input type="text" id="pTel" placeholder="06 12 34 56 78"></div>
+      </div>
+      <div class="espace"></div>
+      <label class="champ" for="pEmail">Adresse Gmail d'envoi</label>
+      <input type="email" id="pEmail" placeholder="prenom.ergova@gmail.com">
+      <div class="espace"></div>
+      <label class="champ" for="pMdp">Mot de passe d'application Gmail <span class="petit-gris" id="mdpEtat"></span></label>
+      <input type="password" id="pMdp" placeholder="16 lettres, ex : abcd efgh ijkl mnop" autocomplete="new-password">
+      <p class="petit-gris">Ce n'est pas ton mot de passe Gmail habituel. Crée-le ici : <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a> (la validation en 2 étapes doit être activée). Laisse vide pour garder celui déjà enregistré.</p>
+      <button class="btn principal" id="btnParams">Enregistrer</button>
+    </div>
+    <div class="carte">
+      <h2>Mon compte</h2>
+      <p class="petit-gris" style="margin-top:-6px" id="compteInfo"></p>
+      <div class="ligne">
+        <div><label class="champ" for="mdpAncien">Mot de passe actuel</label><input type="password" id="mdpAncien" autocomplete="current-password"></div>
+        <div><label class="champ" for="mdpNouveau">Nouveau mot de passe</label><input type="password" id="mdpNouveau" autocomplete="new-password"></div>
+      </div>
+      <div class="actions"><button class="btn" id="btnChangerMdp">Changer le mot de passe du compte</button></div>
+    </div>
+    <div class="carte">
+      <h2>Script d'appel</h2>
+      <p class="petit-gris" style="margin-top:-6px">Affiché dans la fiche de chaque prospect et dans l'Excel.</p>
+      <textarea id="modeleScript" style="min-height:330px;font-size:13px"></textarea>
+      <div class="actions"><button class="btn principal" id="btnScript">Enregistrer le script</button><button class="btn" id="btnDossier">Ouvrir le dossier de l'application</button></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- Fiche prospect -->
+<div class="voile" id="voile"></div>
+<aside class="tiroir" id="tiroir" aria-label="Fiche prospect">
+  <div class="tiroir-tete">
+    <button class="fermer" id="fermer" aria-label="Fermer">×</button>
+    <div id="ficheTitre" class="nom" style="font-size:18px"></div>
+    <div id="ficheSous" class="petit-gris"></div>
+  </div>
+  <div class="tiroir-corps" id="ficheCorps"></div>
+</aside>
+
+<div class="dialogue" id="dialogue"><div class="carte">
+  <h2 id="dlgTitre"></h2><p id="dlgTexte"></p>
+  <div class="actions" style="justify-content:flex-end"><button class="btn" id="dlgNon">Annuler</button><button class="btn principal" id="dlgOui">Confirmer</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const aujourdhui = () => new Date().toISOString().slice(0,10);
+let ETAT = {}, PROSPECTS = [], TRI = {cle:"score", sens:-1}, CHOISI = null, modeZone = "ville", dernierType = null;
+
+async function api(url, corps){
+  const opt = corps === undefined ? {} : {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(corps)};
+  const r = await fetch(url, opt);
+  const d = await r.json().catch(() => ({}));
+  if(r.status===401 && d.connexion){ afficherConnexion(); throw new Error(d.erreur); }
+  if(!r.ok) throw new Error(d.erreur || "Erreur");
+  return d;
+}
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("visible"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("visible"),2600); }
+function confirmer(titre, texte){
+  return new Promise(res=>{
+    $("#dlgTitre").textContent=titre; $("#dlgTexte").textContent=texte; $("#dialogue").classList.add("visible");
+    const fin = v => { $("#dialogue").classList.remove("visible"); $("#dlgOui").onclick=$("#dlgNon").onclick=null; res(v); };
+    $("#dlgOui").onclick=()=>fin(true); $("#dlgNon").onclick=()=>fin(false);
+  });
+}
+
+/* ---------- Onglets ---------- */
+function allerA(nom){
+  $$("nav button").forEach(b=>b.classList.toggle("actif", b.dataset.onglet===nom));
+  $$(".onglet").forEach(s=>s.classList.toggle("actif", s.id==="onglet-"+nom));
+  try{ localStorage.setItem("onglet", nom); }catch(e){}
+  if(nom==="prospects") chargerProspects();
+  if(nom==="emails") chargerEtat().then(chargerDestinataires);
+}
+$$("nav button").forEach(b=>b.onclick=()=>allerA(b.dataset.onglet));
+document.addEventListener("click", e=>{ const a=e.target.closest("[data-aller]"); if(a){ e.preventDefault(); allerA(a.dataset.aller);} });
+
+/* ---------- État général ---------- */
+async function chargerEtat(){
+  ETAT = await api("/api/etat");
+  // secteurs
+  if(!$("#puces").children.length){
+    $("#puces").innerHTML = ETAT.secteurs.map(s=>`<label class="puce"><input type="checkbox" value="${esc(s.nom)}" ${s.actif?"checked":""}><span>${esc(s.nom)}</span></label>`).join("");
+    $("#fSecteur").innerHTML = '<option value="">Tous les secteurs</option>' + ETAT.secteurs.map(s=>`<option>${esc(s.nom)}</option>`).join("");
+    $("#fStatut").innerHTML = '<option value="">Tous les statuts</option><option value="__rappel">À rappeler aujourd\'hui</option>' + ETAT.statuts.map(s=>`<option>${esc(s)}</option>`).join("");
+  }
+  // zones
+  const sel = $("#zone"), avant = sel.value;
+  sel.innerHTML = ETAT.zones.map(z=>`<option value="${esc(z.zone)}">${esc(z.zone.replace("Departement_","Département "))} (${z.nb})</option>`).join("") || '<option value="">Aucune recherche</option>';
+  if(avant && ETAT.zones.some(z=>z.zone===avant)) sel.value = avant;
+  $("#listeZones").innerHTML = ETAT.zones.length ? ETAT.zones.map(z=>`<div class="zone-item" data-zone="${esc(z.zone)}"><div><b>${esc(z.zone.replace("Departement_","Département "))}</b> <span class="petit-gris">· ${z.nb} prospects</span></div><span class="petit-gris">mis à jour le ${esc((z.maj||"").slice(0,10).split("-").reverse().join("/"))} →</span></div>`).join("") : '<p class="petit-gris">Aucune recherche pour l\'instant.</p>';
+  $$(".zone-item").forEach(el=>el.onclick=()=>{ $("#zone").value=el.dataset.zone; allerA("prospects"); });
+  // réglages
+  const p = ETAT.parametres;
+  if(document.activeElement?.closest?.("#onglet-reglages")==null){
+    $("#pNom").value=p.prenom_nom; $("#pTel").value=p.telephone; $("#pEmail").value=p.email;
+  }
+  $("#mdpEtat").textContent = p.mot_de_passe_defini ? "· ✓ déjà enregistré" : "· pas encore défini";
+  $("#alerteReglages").hidden = p.email && p.mot_de_passe_defini && p.prenom_nom;
+  $("#alerteMdp").hidden = !p.probleme_mot_de_passe;
+  $("#alerteMdp").innerHTML = p.probleme_mot_de_passe ? "⚠ Les e-mails ne peuvent pas partir : " + esc(p.probleme_mot_de_passe).replace("https://myaccount.google.com/apppasswords", '<a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a>').replace("l'onglet Réglages", '<a href="#" data-aller="reglages">l\'onglet Réglages</a>') : "";
+  if(p.probleme_mot_de_passe) $("#mdpEtat").textContent = "· ⚠ invalide (pas un mot de passe d'application)";
+  // e-mails
+  const e = ETAT.envois;
+  $("#tuilesEmails").innerHTML = `
+    <div class="tuile"><div class="val">${e.prets}</div><div class="lib">e-mails prêts à partir</div></div>
+    <div class="tuile"><div class="val">${e.aujourdhui} <span class="petit-gris" style="font-size:14px">/ ${e.max_jour}</span></div><div class="lib">envoyés aujourd'hui</div><div class="jauge"><div style="width:${Math.min(100,e.aujourdhui/e.max_jour*100)}%"></div></div></div>
+    <div class="tuile"><div class="val">${e.total}</div><div class="lib">envoyés au total</div></div>`;
+  $("#corpsEnvois").innerHTML = e.derniers.map(x=>`<tr style="cursor:default"><td class="petit-gris">${esc(x.envoye_le.replace("T"," "))}</td><td>${esc(x.email)}</td><td>${esc(x.objet)}</td></tr>`).join("");
+  $("#videEnvois").hidden = e.derniers.length>0;
+}
+
+/* ---------- Recherche ---------- */
+$$("#basculeZone button").forEach(b=>b.onclick=()=>{
+  modeZone=b.dataset.mode; $$("#basculeZone button").forEach(x=>x.classList.toggle("actif",x===b));
+  $("#blocVille").hidden = modeZone!=="ville"; $("#blocDep").hidden = modeZone!=="departement";
+});
+$("#ville").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#btnLancer").click(); });
+$("#btnLancer").onclick = async ()=>{
+  const secteurs = $$("#puces input:checked").map(i=>i.value);
+  if(!secteurs.length) return toast("Choisis au moins un secteur.");
+  const corps = {limite:+$("#limite").value||200, secteurs, nouveaux:$("#nouveaux").checked};
+  if(modeZone==="ville"){ corps.ville=$("#ville").value.trim(); if(!corps.ville) return toast("Indique une ville."); }
+  else { corps.departement=$("#departement").value.trim(); if(!corps.departement) return toast("Indique un département."); }
+  try{ await api("/api/rechercher", corps); $("#btnVoir").hidden=true; suivreTache(); }
+  catch(e){ toast(e.message); }
+};
+$("#btnVoir").onclick=()=>allerA("prospects");
+
+function colorer(l){
+  const e = esc(l);
+  if(/^===|^\d\)/.test(l)) return `<span class="titre">${e}</span>`;
+  if(/→|Terminé|envoyé à/.test(l)) return `<span class="ok">${e}</span>`;
+  return e;
+}
+let minuteur=null;
+async function suivreTache(){
+  clearTimeout(minuteur);
+  let t; try{ t = await api("/api/tache"); }catch(e){ minuteur=setTimeout(suivreTache,2000); return; }
+  if(!t.type){ return; }
+  const recherche = t.type==="recherche";
+  const cons = recherche ? $("#console") : $("#consoleEnvoi");
+  const rond = recherche ? $("#rond") : $("#rondEnvoi");
+  const txt = recherche ? $("#etatTxt") : $("#etatEnvoi");
+  const enBas = cons.scrollTop + cons.clientHeight >= cons.scrollHeight - 30;
+  cons.innerHTML = t.lignes.map(colorer).join("\n") || "Démarrage…";
+  if(enBas) cons.scrollTop = cons.scrollHeight;
+  const sec = Math.round((Date.now()-new Date(t.debut))/1000);
+  if(recherche) $("#chrono").textContent = `${Math.floor(sec/60)} min ${String(sec%60).padStart(2,"0")} s`;
+  $("#tacheMini").classList.toggle("visible", t.en_cours);
+  $("#tacheMiniTxt").textContent = recherche ? "Recherche en cours…" : "Envoi des e-mails en cours…";
+  $("#btnLancer").disabled = $("#btnEnvoyer").disabled = t.en_cours;
+  if(t.en_cours){
+    rond.className="rond tourne"; txt.textContent = recherche ? "Recherche en cours…" : "Envoi en cours…";
+    minuteur=setTimeout(suivreTache,1000);
+  }else{
+    const ok = t.code===0;
+    rond.className = "rond " + (ok?"fini":"erreur");
+    txt.textContent = ok ? (recherche?"Recherche terminée":"Envoi terminé") : "Arrêté avec une erreur";
+    if(dernierType && dernierType.en_cours){ // vient de se terminer
+      await chargerEtat();
+      if(recherche && ok){ $("#btnVoir").hidden=false; if(ETAT.zones[0]) $("#zone").value=ETAT.zones[0].zone; toast("Recherche terminée ✓"); }
+      if(!recherche){ toast(ok?"Envoi terminé ✓":"L'envoi s'est arrêté : regarde le journal."); chargerDestinataires(); }
+    }
+  }
+  dernierType = t;
+}
+
+/* ---------- Prospects ---------- */
+const STYLE_STATUT = s => /Intéressé|Formulaire|Client/.test(s) ? "st-bon" : /Rappeler|Messagerie|pas joignable/.test(s) ? "st-attente" : /Pas |STOP/.test(s) ? "st-non" : /E-mail envoyé/.test(s) ? "st-envoye" : "";
+async function chargerProspects(){
+  if(!ETAT.zones) await chargerEtat();
+  const zone = $("#zone").value;
+  PROSPECTS = zone ? await api("/api/prospects?zone="+encodeURIComponent(zone)) : [];
+  afficherProspects();
+}
+$("#zone").onchange = chargerProspects;
+["#fRecherche","#fSecteur","#fPrio","#fStatut","#fTel","#fMail"].forEach(s=>$(s).addEventListener("input", afficherProspects));
+$$("th[data-tri]").forEach(th=>th.onclick=()=>{ const c=th.dataset.tri; TRI = {cle:c, sens: TRI.cle===c ? -TRI.sens : 1}; afficherProspects(); });
+
+function filtrer(){
+  const q = $("#fRecherche").value.toLowerCase().trim(), sect=$("#fSecteur").value, pr=$("#fPrio").value, st=$("#fStatut").value;
+  return PROSPECTS.filter(p=>{
+    if(q && ![p.entreprise,p.dirigeant,p.raison_sociale,p.adresse,p.email,p.telephone].join(" ").toLowerCase().includes(q)) return false;
+    if(sect && p.secteur!==sect) return false;
+    if(pr && p.priorite!==pr) return false;
+    if(st==="__rappel"){ if(!p.rappel_le || p.rappel_le>aujourdhui()) return false; }
+    else if(st && p.statut!==st) return false;
+    if($("#fTel").checked && !p.telephone) return false;
+    if($("#fMail").checked && !p.email) return false;
+    return true;
+  });
+}
+function afficherProspects(){
+  const tous = PROSPECTS, n = k => tous.filter(k).length;
+  const rappels = n(p=>p.rappel_le && p.rappel_le<=aujourdhui() && !/Pas |STOP|Client/.test(p.statut||""));
+  $("#pastilleRappels").hidden = !rappels; $("#pastilleRappels").textContent = rappels;
+  $("#tuiles").innerHTML = `
+    <div class="tuile"><div class="val">${tous.length}</div><div class="lib">prospects</div></div>
+    <div class="tuile"><div class="val">${n(p=>p.telephone)}</div><div class="lib">avec téléphone</div></div>
+    <div class="tuile"><div class="val">${n(p=>p.email)}</div><div class="lib">avec e-mail</div></div>
+    <div class="tuile"><div class="val">${n(p=>p.priorite==="A")}</div><div class="lib">priorité A</div></div>
+    <div class="tuile"><div class="val">${n(p=>p.statut && p.statut!=="À contacter")}</div><div class="lib">déjà contactés</div></div>
+    <div class="tuile"><div class="val" style="color:var(--ok)">${n(p=>/Intéressé|Formulaire|Client/.test(p.statut||""))}</div><div class="lib">intéressés / clients</div></div>`;
+  let liste = filtrer();
+  const cle = TRI.cle, num = ["score","tranche"].includes(cle);
+  liste.sort((a,b)=>{ let x=a[cle]??"", y=b[cle]??""; if(num){x=+x||0;y=+y||0;} else {x=String(x).toLowerCase(); y=String(y).toLowerCase();} return (x>y?1:x<y?-1:0)*TRI.sens; });
+  $("#corpsTable").innerHTML = liste.map(p=>`
+    <tr data-siret="${esc(p.siret)}" class="${CHOISI===p.siret?"choisi":""}">
+      <td><span class="badge prio-${esc(p.priorite)}">${esc(p.priorite)}</span></td>
+      <td><div class="nom">${esc(p.entreprise)}</div><div class="petit-gris">${esc(p.secteur)} · ${esc((p.ville||"").toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase()))}</div></td>
+      <td>${esc(p.dirigeant)||'<span class="petit-gris">—</span>'}</td>
+      <td class="petit-gris">${esc(p.effectif)}</td>
+      <td style="white-space:nowrap">${p.telephone?`<a href="tel:${esc(p.telephone.replace(/\s/g,""))}" onclick="event.stopPropagation()">${esc(p.telephone)}</a>`:'<span class="petit-gris">—</span>'}</td>
+      <td>${p.email?esc(p.email):'<span class="petit-gris">—</span>'}</td>
+      <td><span class="statut ${STYLE_STATUT(p.statut||"")}">${esc(p.statut||"À contacter")}</span></td>
+      <td class="petit-gris" style="white-space:nowrap;${p.rappel_le && p.rappel_le<=aujourdhui()?"color:var(--bad);font-weight:600":""}">${esc((p.rappel_le||"").split("-").reverse().join("/"))}</td>
+    </tr>`).join("");
+  $("#videTable").hidden = PROSPECTS.length>0;
+  $("#compteur").textContent = PROSPECTS.length ? `${liste.length} affiché(s) sur ${PROSPECTS.length}` : "";
+  $$("#corpsTable tr").forEach(tr=>tr.onclick=()=>ouvrirFiche(tr.dataset.siret));
+}
+$("#btnExcel").onclick = async ()=>{ const z=$("#zone").value; if(!z) return; try{ await api("/api/excel",{zone:z}); toast("Excel s'ouvre sur ton PC (regarde la barre des tâches)"); }catch(e){ toast(e.message); } };
+$("#btnTelecharger").onclick = e=>{
+  const z=$("#zone").value;
+  if(!z){ e.preventDefault(); return toast("Aucune recherche à télécharger."); }
+  e.currentTarget.href = "/api/telecharger?zone="+encodeURIComponent(z);
+  toast("Téléchargement de l'Excel…");
+};
+
+/* ---------- Fiche ---------- */
+let SCRIPT = "";
+async function ouvrirFiche(siret){
+  const p = PROSPECTS.find(x=>x.siret===siret); if(!p) return;
+  CHOISI = siret; afficherProspects();
+  if(!SCRIPT){ try{ SCRIPT=(await api("/api/modeles")).script; }catch(e){} }
+  $("#ficheTitre").textContent = p.entreprise;
+  $("#ficheSous").innerHTML = `<span class="badge prio-${esc(p.priorite)}">Priorité ${esc(p.priorite)}</span> &nbsp;${esc(p.secteur)} · ${esc(p.effectif)}`;
+  const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(p.entreprise+" "+p.adresse);
+  const site = p.site ? (p.site.startsWith("http")?p.site:"http://"+p.site) : "";
+  $("#ficheCorps").innerHTML = `
+    <div class="actions">
+      ${p.telephone?`<a class="btn principal petit" href="tel:${esc(p.telephone.replace(/\s/g,""))}">📞 ${esc(p.telephone)}</a>`:""}
+      ${p.email?`<a class="btn petit" href="mailto:${esc(p.email)}">✉ E-mail</a>`:""}
+      ${p.email && !p.email_envoye_le?`<button class="btn petit" id="ajouterEnvoi">➕ Ajouter à l'envoi</button>`:""}
+      ${site?`<a class="btn petit" href="${esc(site)}" target="_blank" rel="noopener">🌐 Site</a>`:""}
+      <a class="btn petit" href="${esc(maps)}" target="_blank" rel="noopener">📍 Plan</a>
+    </div>
+    <dl class="infos">
+      <dt>Dirigeant</dt><dd>${esc(p.dirigeant)||"—"} <span class="petit-gris">${esc(p.qualite_dirigeant)}</span></dd>
+      <dt>Adresse</dt><dd>${esc(p.adresse)}</dd>
+      <dt>E-mail</dt><dd>${esc(p.email)||"—"}</dd>
+      <dt>Raison sociale</dt><dd>${esc(p.raison_sociale)}</dd>
+      <dt>SIRET</dt><dd>${esc(p.siret)} <span class="petit-gris">· NAF ${esc(p.naf)}</span></dd>
+      <dt>Source</dt><dd class="petit-gris">${esc(p.source_contact)||"—"}</dd>
+      ${p.email_envoye_le?`<dt>E-mail envoyé</dt><dd>${esc(p.email_envoye_le.replace("T"," "))}</dd>`:""}
+    </dl>
+    <label class="champ">Accroche d'appel</label>
+    <div class="encadre" id="accroche">${esc(p.accroche)}</div>
+    <div class="actions"><button class="btn petit" id="copier">Copier l'accroche</button></div>
+    <h2 style="margin-top:18px">Suivi</h2>
+    <div class="ligne">
+      <div><label class="champ" for="fStatutFiche">Statut</label><select id="fStatutFiche">${ETAT.statuts.map(s=>`<option ${s===(p.statut||"À contacter")?"selected":""}>${esc(s)}</option>`).join("")}</select></div>
+      <div style="max-width:170px"><label class="champ" for="fRappel">Rappeler le</label><input type="date" id="fRappel" value="${esc(p.rappel_le||"")}"></div>
+    </div>
+    <div class="espace"></div>
+    <label class="champ" for="fNotes">Notes</label>
+    <textarea id="fNotes" placeholder="ex : 6 salariés, DUERP de 2019, référent possible : Karim (chef d'équipe)">${esc(p.notes||"")}</textarea>
+    <div class="actions">
+      <button class="btn principal" id="enregistrer">Enregistrer</button>
+      <button class="btn petit" data-rapide="1">Demain</button><button class="btn petit" data-rapide="3">Dans 3 jours</button><button class="btn petit" data-rapide="7">Dans 1 semaine</button>
+    </div>
+    ${p.email?`<details id="detApercu"><summary>Aperçu de l'e-mail de prospection</summary><div class="encadre" id="apercu">Chargement…</div></details>`:""}
+    <details><summary>Script d'appel</summary><div class="encadre" style="font-size:12.5px">${esc(SCRIPT)}</div></details>`;
+  const aj = $("#ajouterEnvoi");
+  if(aj) aj.onclick = ()=>{ COCHES.add(p.siret); toast(`${p.entreprise} ajouté à l'envoi (${COCHES.size} sélectionné(s)). Onglet E-mails pour envoyer.`); };
+  $("#copier").onclick=()=>{ navigator.clipboard?.writeText(p.accroche); toast("Accroche copiée"); };
+  $$("[data-rapide]").forEach(b=>b.onclick=()=>{ const d=new Date(); d.setDate(d.getDate()+ +b.dataset.rapide); $("#fRappel").value=d.toISOString().slice(0,10); if($("#fStatutFiche").value==="À contacter") $("#fStatutFiche").value="Rappeler"; });
+  $("#enregistrer").onclick=async()=>{
+    const maj = {siret:p.siret, statut:$("#fStatutFiche").value, rappel_le:$("#fRappel").value, notes:$("#fNotes").value};
+    try{ await api("/api/suivi", maj); Object.assign(p, maj); afficherProspects(); toast("Enregistré ✓"); }catch(e){ toast(e.message); }
+  };
+  const det = $("#detApercu");
+  if(det) det.ontoggle = async()=>{ if(!det.open) return; try{ const a=await api("/api/apercu?siret="+encodeURIComponent(p.siret)); $("#apercu").textContent=`À : ${a.a}\nObjet : ${a.objet}\n\n${a.corps}`; }catch(e){ $("#apercu").textContent=e.message; } };
+  $("#tiroir").classList.add("ouvert"); $("#voile").classList.add("visible");
+}
+function fermerFiche(){ $("#tiroir").classList.remove("ouvert"); $("#voile").classList.remove("visible"); CHOISI=null; afficherProspects(); }
+$("#fermer").onclick=fermerFiche; $("#voile").onclick=fermerFiche;
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && $("#tiroir").classList.contains("ouvert")) fermerFiche(); });
+
+/* ---------- E-mails : choix des destinataires ---------- */
+let DEST = [], COCHES = new Set();
+async function chargerDestinataires(){
+  const sel = $("#dZone"), avant = sel.value;
+  sel.innerHTML = '<option value="">Toutes les zones</option>' + (ETAT.zones||[]).map(z=>`<option value="${esc(z.zone)}">${esc(z.zone.replace("Departement_","Département "))}</option>`).join("");
+  sel.value = avant;
+  if($("#dSecteur").options.length<2) $("#dSecteur").innerHTML = '<option value="">Tous les secteurs</option>' + ETAT.secteurs.map(s=>`<option>${esc(s.nom)}</option>`).join("");
+  DEST = await api("/api/destinataires" + (sel.value ? "?zone="+encodeURIComponent(sel.value) : ""));
+  const possibles = new Set(DEST.map(d=>d.siret));
+  COCHES = new Set([...COCHES].filter(s=>possibles.has(s)));
+  afficherDestinataires();
+}
+function destFiltres(){
+  const q=$("#dRecherche").value.toLowerCase().trim(), s=$("#dSecteur").value, pr=$("#dPrio").value;
+  return DEST.filter(d=>(!s||d.secteur===s) && (!pr||d.priorite===pr) && (!q||[d.entreprise,d.dirigeant,d.email].join(" ").toLowerCase().includes(q)));
+}
+function afficherDestinataires(){
+  const liste = destFiltres();
+  $("#corpsDest").innerHTML = liste.map(d=>`
+    <tr data-siret="${esc(d.siret)}" class="${COCHES.has(d.siret)?"choisi":""}">
+      <td><input type="checkbox" ${COCHES.has(d.siret)?"checked":""} aria-label="Choisir ${esc(d.entreprise)}"></td>
+      <td><span class="badge prio-${esc(d.priorite)}">${esc(d.priorite)}</span></td>
+      <td><div class="nom">${esc(d.entreprise)}</div><div class="petit-gris">${esc(d.secteur)} · ${esc(d.effectif)}</div></td>
+      <td>${esc(d.dirigeant)||'<span class="petit-gris">—</span>'}</td>
+      <td>${esc(d.email)}</td>
+      <td class="petit-gris">${esc((d.zone||"").replace("Departement_","Dép. "))}</td>
+    </tr>`).join("");
+  $("#videDest").hidden = DEST.length>0;
+  $$("#corpsDest tr").forEach(tr=>tr.onclick=e=>{
+    const s=tr.dataset.siret; COCHES.has(s)?COCHES.delete(s):COCHES.add(s); afficherDestinataires();
+  });
+  const n = COCHES.size;
+  $("#dCompteur").textContent = `${n} sélectionné(s) · ${liste.length} affiché(s) sur ${DEST.length} destinataire(s) possibles`;
+  $("#dCaseTout").checked = liste.length>0 && liste.every(d=>COCHES.has(d.siret));
+  $("#btnEnvoyer").textContent = `✉ Envoyer aux ${n} sélectionné${n>1?"s":""}`;
+  $("#btnEnvoyer").disabled = n===0 || $("#tacheMini").classList.contains("visible");
+}
+$("#dZone").onchange = chargerDestinataires;
+["#dSecteur","#dPrio","#dRecherche"].forEach(s=>$(s).addEventListener("input", afficherDestinataires));
+$("#dTout").onclick = ()=>{ destFiltres().forEach(d=>COCHES.add(d.siret)); afficherDestinataires(); };
+$("#dRien").onclick = ()=>{ COCHES.clear(); afficherDestinataires(); };
+$("#d30").onclick = ()=>{ COCHES.clear(); destFiltres().slice(0,30).forEach(d=>COCHES.add(d.siret)); afficherDestinataires(); };
+$("#dCaseTout").onclick = e=>{ e.stopPropagation(); const l=destFiltres(); if(e.target.checked) l.forEach(d=>COCHES.add(d.siret)); else l.forEach(d=>COCHES.delete(d.siret)); afficherDestinataires(); };
+
+$("#btnEnvoyer").onclick = async ()=>{
+  const choisis = DEST.filter(d=>COCHES.has(d.siret));
+  if(!choisis.length) return toast("Coche au moins un destinataire.");
+  const apercu = choisis.slice(0,8).map(d=>`• ${d.entreprise} <${d.email}>`).join("\n") + (choisis.length>8 ? `\n… et ${choisis.length-8} autre(s)` : "");
+  if(!await confirmer(`Envoyer ${choisis.length} e-mail(s) ?`, `Depuis ${ETAT.parametres.email || "ton adresse"} vers :\n\n${apercu}\n\nL'envoi continue tant que la fenêtre noire reste ouverte.`)) return;
+  try{ await api("/api/envoyer",{sirets:choisis.map(d=>d.siret)}); COCHES.clear(); suivreTache(); toast("Envoi lancé"); }catch(e){ toast(e.message); }
+};
+async function chargerModeles(){ try{ const m=await api("/api/modeles"); $("#modeleEmail").value=m.email; $("#modeleScript").value=m.script; SCRIPT=m.script; }catch(e){} }
+$("#btnModele").onclick = async()=>{ try{ await api("/api/modeles",{email:$("#modeleEmail").value}); toast("Modèle enregistré ✓"); }catch(e){ toast(e.message); } };
+$("#btnScript").onclick = async()=>{ try{ await api("/api/modeles",{script:$("#modeleScript").value}); SCRIPT=$("#modeleScript").value; toast("Script enregistré ✓"); }catch(e){ toast(e.message); } };
+$("#btnApercuModele").onclick = async()=>{
+  try{
+    await api("/api/modeles",{email:$("#modeleEmail").value});
+    if(!PROSPECTS.length) await chargerProspects();
+    const p = PROSPECTS.find(x=>x.email); if(!p) return toast("Aucun prospect avec e-mail.");
+    const a = await api("/api/apercu?siret="+encodeURIComponent(p.siret));
+    await confirmer("Aperçu : "+p.entreprise, `À : ${a.a}\nObjet : ${a.objet}\n\n${a.corps}`);
+  }catch(e){ toast(e.message); }
+};
+$("#dlgTexte").style.whiteSpace="pre-wrap"; $("#dlgTexte").style.maxHeight="60vh"; $("#dlgTexte").style.overflow="auto";
+
+/* ---------- Réglages ---------- */
+$("#btnParams").onclick = async()=>{
+  const d = {prenom_nom:$("#pNom").value, telephone:$("#pTel").value, email:$("#pEmail").value};
+  if($("#pMdp").value.trim()) d.mot_de_passe_application = $("#pMdp").value.trim();
+  try{ await api("/api/parametres", d); $("#pMdp").value=""; await chargerEtat(); toast("Réglages enregistrés ✓"); }catch(e){ toast(e.message); }
+};
+$("#btnDossier").onclick = ()=>api("/api/ouvrir",{quoi:"dossier"});
+
+/* ---------- Comptes ---------- */
+let modeInscription = false;
+function modeCnx(inscription){
+  modeInscription = inscription;
+  $("#cnxTitre").textContent = inscription ? "Créer un compte" : "Connexion";
+  $("#cnxSous").textContent = inscription ? "Chaque compte a ses propres prospects, son Gmail et son suivi." : "Connecte-toi à ton compte ERGOVA Prospection.";
+  $("#cnxBlocNom").hidden = $("#cnxAide").hidden = !inscription;
+  $("#cnxBouton").textContent = inscription ? "Créer mon compte" : "Se connecter";
+  $("#cnxBascule").textContent = inscription ? "J'ai déjà un compte : me connecter" : "Créer un nouveau compte";
+  $("#cnxMdp").autocomplete = inscription ? "new-password" : "current-password";
+  $("#cnxErreur").textContent = "";
+}
+async function afficherConnexion(){
+  let s = {}; try{ s = await (await fetch("/api/session")).json(); }catch(e){}
+  modeCnx(!s.comptes_existent);
+  if(!s.comptes_existent) $("#cnxSous").textContent = "Bienvenue ! Crée ton compte pour commencer. Tes recherches existantes seront rangées dedans.";
+  $("#ecranConnexion").hidden = false;
+  setTimeout(()=>(modeInscription ? $("#cnxNom") : $("#cnxIdent")).focus(), 50);
+}
+$("#cnxBascule").onclick = e=>{ e.preventDefault(); modeCnx(!modeInscription); };
+$("#formConnexion").onsubmit = async e=>{
+  e.preventDefault();
+  const corps = {identifiant:$("#cnxIdent").value.trim().toLowerCase(), mot_de_passe:$("#cnxMdp").value};
+  if(modeInscription) corps.nom = $("#cnxNom").value.trim();
+  try{
+    const r = await fetch(modeInscription?"/api/inscription":"/api/connexion",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(corps)});
+    const d = await r.json();
+    if(!r.ok) return $("#cnxErreur").textContent = d.erreur || "Erreur";
+    location.reload();
+  }catch(err){ $("#cnxErreur").textContent = "Le serveur ne répond pas. La fenêtre noire est-elle ouverte ?"; }
+};
+$("#btnDeconnexion").onclick = async()=>{ await fetch("/api/deconnexion",{method:"POST"}); location.reload(); };
+$("#btnChangerMdp").onclick = async()=>{
+  try{ await api("/api/mot_de_passe",{ancien:$("#mdpAncien").value, nouveau:$("#mdpNouveau").value}); $("#mdpAncien").value=$("#mdpNouveau").value=""; toast("Mot de passe du compte changé ✓"); }
+  catch(e){ toast(e.message); }
+};
+
+/* ---------- Démarrage ---------- */
+(async()=>{
+  const s = await (await fetch("/api/session")).json();
+  if(!s.connecte){ afficherConnexion(); return; }
+  $("#quiConnecte").textContent = "👤 " + s.nom;
+  $("#compteInfo").textContent = `Connecté en tant que ${s.nom} (identifiant : ${s.identifiant}). Tes prospects, ton Gmail et tes modèles ne sont visibles que dans ton compte.`;
+  await chargerEtat(); chargerModeles(); suivreTache();
+  let o="rechercher"; try{ o = localStorage.getItem("onglet") || o; }catch(e){}
+  if(!ETAT.zones.length) o="rechercher";
+  allerA(o);
+  setInterval(()=>{ if(!$("#tacheMini").classList.contains("visible")) api("/api/tache").then(t=>{ if(t.en_cours) suivreTache(); }).catch(()=>{}); }, 5000);
+})();
+</script>
+</body>
+</html>
