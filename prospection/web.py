@@ -89,4 +89,8 @@ def explorer_site(url):
         emails += [e for e in _emails(h) if e not in emails]
         tels += TEL_RE.findall(h)
 
-    return {"email": _meilleur_email(emails, domaine), "telephone": tels[0] if tels else ""}
+    uniques = []
+    for t in tels:
+        if t not in uniques:
+            uniques.append(t)
+    return {"email": _meilleur_email(emails, domaine), "telephone": "; ".join(uniques[:6])}

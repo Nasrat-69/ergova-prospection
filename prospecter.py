@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
 import config
-from prospection import base, chemins, export, messages, osm, rge, sirene, web
+from prospection import base, chemins, export, messages, osm, rge, sirene, statuts, web
 
 ICI = os.path.dirname(os.path.abspath(__file__))
 
@@ -21,6 +21,23 @@ ICI = os.path.dirname(os.path.abspath(__file__))
 def formater_tel(tel):
     """« +33 3 80 12 34 56 » / « 0380123456 » -> « 03 80 12 34 56 »."""
     tel = tel.split(";")[0]
+    return _format_un(tel)
+
+
+def ranger_telephones(p, *sources):
+    """Ajoute des numéros (séparés par « ; ») : garde le 1er numéro et le 1er mobile."""
+    for src in sources:
+        for t in (src or "").replace(",", ";").split(";"):
+            t = _format_un(t)
+            if len(re.sub(r"\D", "", t)) < 10:
+                continue
+            if not p.get("telephone"):
+                p["telephone"] = t
+            if not p.get("mobile") and statuts.est_mobile(t):
+                p["mobile"] = t
+
+
+def _format_un(tel):
     chiffres = re.sub(r"\D", "", tel)
     if chiffres.startswith("33") and len(chiffres) == 11:
         chiffres = "0" + chiffres[2:]
@@ -95,7 +112,7 @@ def main():
     # 2. Enrichissement OpenStreetMap
     log("2) Recherche des téléphones / sites / e-mails (OpenStreetMap)")
     for p in tous:
-        p.update({"telephone": "", "email": "", "site": "", "source_contact": ""})
+        p.update({"telephone": "", "mobile": "", "email": "", "site": "", "source_contact": ""})
     lats = sorted(p["latitude"] for p in tous if p["latitude"])
     lons = sorted(p["longitude"] for p in tous if p["longitude"])
     if lats:
@@ -117,7 +134,8 @@ def main():
     for p in tous:
         lieu = trouves_osm.get(p["siret"])
         if lieu:
-            p["telephone"], p["site"], p["email"] = lieu["telephone"], lieu["site"], lieu["email"]
+            p["site"], p["email"] = lieu["site"], lieu["email"]
+            ranger_telephones(p, lieu["telephone"])
             p["source_contact"] = "OpenStreetMap"
     log(f"   → {len(trouves_osm)} entreprises trouvées sur la carte")
 
@@ -129,7 +147,7 @@ def main():
         if not f:
             continue
         n_rge += 1
-        p["telephone"] = p["telephone"] or f["telephone"]
+        ranger_telephones(p, f["telephone"])
         p["email"] = p["email"] or f["email"]
         p["site"] = p["site"] or f["site"]
         p["source_contact"] = (p["source_contact"] + " + RGE").strip(" +")
@@ -139,20 +157,19 @@ def main():
 
     # 3. Pré-sélection puis visite des sites web pour trouver les e-mails
     candidats = selectionner(tous, args.limite * 2)
-    a_visiter = [p for p in candidats if p["site"] and not p["email"]]
-    log(f"3) Visite de {len(a_visiter)} sites web pour trouver les e-mails…")
+    # on visite aussi les sites quand il manque un mobile
+    a_visiter = [p for p in candidats if p["site"] and (not p["email"] or not p["mobile"])]
+    log(f"3) Visite de {len(a_visiter)} sites web pour trouver e-mails et mobiles…")
     with ThreadPoolExecutor(max_workers=10) as pool:
         for p, res in zip(a_visiter, pool.map(lambda p: web.explorer_site(p["site"]), a_visiter)):
-            if res["email"]:
+            if res["email"] and not p["email"]:
                 p["email"] = res["email"]
-                p["source_contact"] = "OpenStreetMap + site web"
-            if res["telephone"] and not p["telephone"]:
-                p["telephone"] = res["telephone"]
+                p["source_contact"] = (p["source_contact"] + " + site web").strip(" +")
+            ranger_telephones(p, res["telephone"])
     for p in candidats:
-        if p["telephone"]:
-            p["telephone"] = formater_tel(p["telephone"])
         messages.scorer(p)
-    log(f"   → {sum(1 for p in candidats if p['email'])} e-mails trouvés\n")
+    log(f"   → {sum(1 for p in candidats if p['email'])} e-mails et "
+        f"{sum(1 for p in candidats if p['mobile'])} mobiles trouvés\n")
 
     # 4. Sélection finale + sauvegarde
     finaux = selectionner(candidats, args.limite)
@@ -166,8 +183,9 @@ def main():
     # les anciens prospects de cette zone jamais contactés sortent de la liste
     # (ceux qui ont un suivi en cours restent visibles)
     conn.execute("UPDATE prospects SET selectionne='0' WHERE zone=? AND "
-                 "COALESCE(statut, 'À contacter')='À contacter' AND email_envoye_le IS NULL "
-                 "AND COALESCE(notes, '')='' AND COALESCE(rappel_le, '')=''", (nom_zone,))
+                 "COALESCE(statut, ?)=? AND email_envoye_le IS NULL "
+                 "AND COALESCE(notes, '')='' AND COALESCE(rappel_le, '')=''",
+                 (nom_zone, statuts.DEFAUT, statuts.DEFAUT))
     base.enregistrer(conn, finaux)
 
     # recharge depuis la base pour récupérer statuts / notes
@@ -188,7 +206,8 @@ def main():
     tel = sum(1 for p in finaux if p["telephone"])
     mail = sum(1 for p in finaux if p["email"])
     log("=== Terminé ===")
-    log(f"{len(finaux)} prospects | {tel} avec téléphone | {mail} avec e-mail | "
+    log(f"{len(finaux)} prospects | {tel} avec téléphone dont "
+        f"{sum(1 for p in finaux if p['mobile'])} mobiles | {mail} avec e-mail | "
         f"{sum(1 for p in finaux if p['priorite'] == 'A')} en priorité A")
     log(f"Fichier : {chemin_xlsx}")
 

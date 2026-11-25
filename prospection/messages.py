@@ -14,6 +14,8 @@ def scorer(p):
     s = config.POINTS_TRANCHE.get(p["tranche"], config.POINTS_TRANCHE_DEFAUT)
     if p.get("telephone"):
         s += 25
+    if p.get("mobile"):
+        s += 10  # souvent la ligne directe du gérant
     if p.get("email"):
         s += 20
     if p.get("dirigeant"):

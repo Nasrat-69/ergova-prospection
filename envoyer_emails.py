@@ -21,11 +21,10 @@ from email.message import EmailMessage
 from email.utils import formataddr, make_msgid
 
 import config
-from prospection import base, chemins, export, messages
+from prospection import base, chemins, export, messages, statuts
 
 ICI = os.path.dirname(os.path.abspath(__file__))
-STATUTS_BLOQUANTS = {"STOP / ne plus contacter", "Pas intéressé", "Pas éligible", "Client",
-                     "Formulaire envoyé", "Formulaire rempli", "Intéressé"}
+STATUTS_BLOQUANTS = statuts.BLOQUANTS_EMAIL
 
 MODELE_PARAMS = """[expediteur]
 # Ton adresse Gmail (ou autre) qui envoie les e-mails

@@ -4,14 +4,14 @@ import os
 import sqlite3
 from datetime import date, datetime
 
-from . import chemins
+from . import chemins, statuts
 
 
 COLONNES = [
     "siret", "siren", "entreprise", "raison_sociale", "enseignes", "secteur", "naf",
     "tranche", "effectif", "dirigeant", "qualite_dirigeant", "adresse", "code_postal",
     "ville", "latitude", "longitude", "date_creation", "nb_etablissements_entreprise",
-    "telephone", "email", "site", "source_contact", "score", "priorite", "zone",
+    "telephone", "mobile", "email", "site", "source_contact", "score", "priorite", "zone",
 ]
 SUIVI = ["statut", "rappel_le", "notes", "email_envoye_le", "selectionne", "suivi_maj_le"]
 
@@ -29,6 +29,12 @@ def connexion():
     for col in COLONNES[1:] + SUIVI:
         if col not in existantes:
             c.execute(f"ALTER TABLE prospects ADD COLUMN {col} TEXT")
+    # anciens noms de statuts -> nouveaux ; mobile déduit du téléphone si besoin
+    for ancien, nouveau in statuts.ANCIENS.items():
+        c.execute("UPDATE prospects SET statut=? WHERE statut=?", (nouveau, ancien))
+    for r in c.execute("SELECT siret, telephone FROM prospects WHERE mobile IS NULL AND telephone != ''").fetchall():
+        if statuts.est_mobile(r[1]):
+            c.execute("UPDATE prospects SET mobile=? WHERE siret=?", (r[1], r[0]))
     c.commit()
     return c
 
@@ -41,7 +47,7 @@ def enregistrer(c, prospects):
         maj = ", ".join(f"{k}=excluded.{k}" for k in COLONNES[1:])
         c.execute(
             f"INSERT INTO prospects ({', '.join(COLONNES)}, statut, selectionne, maj_le) "
-            f"VALUES ({', '.join('?' * len(COLONNES))}, 'À contacter', ?, ?) "
+            f"VALUES ({', '.join('?' * len(COLONNES))}, '" + statuts.DEFAUT + "', ?, ?) "
             f"ON CONFLICT(siret) DO UPDATE SET {maj}, selectionne=excluded.selectionne, maj_le=excluded.maj_le",
             valeurs + [p.get("selectionne", "1"), maintenant],
         )
@@ -64,6 +70,6 @@ def envois_aujourdhui(c):
 def noter_envoi(c, siret, email, objet):
     maintenant = datetime.now().isoformat(timespec="seconds")
     c.execute("INSERT INTO envois VALUES (?, ?, ?, ?)", (siret, email, maintenant, objet))
-    c.execute("UPDATE prospects SET email_envoye_le=?, statut=CASE WHEN statut='À contacter' "
+    c.execute("UPDATE prospects SET email_envoye_le=?, statut=CASE WHEN COALESCE(statut, '')=='' OR statut='" + statuts.DEFAUT + "' "
               "THEN 'E-mail envoyé' ELSE statut END WHERE siret=?", (maintenant, siret))
     c.commit()

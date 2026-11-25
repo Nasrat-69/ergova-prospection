@@ -10,13 +10,12 @@ from collections import Counter
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
+from openpyxl.formatting.rule import FormulaRule
 from openpyxl.worksheet.datavalidation import DataValidation
 
-from . import base, messages
+from . import base, messages, statuts
 
-STATUTS = ["À contacter", "E-mail envoyé", "Appelé - pas joignable", "Rappeler",
-           "Messagerie laissée", "Intéressé", "Formulaire envoyé", "Formulaire rempli",
-           "Pas éligible", "Pas intéressé", "STOP / ne plus contacter", "Client"]
+STATUTS = statuts.LISTE
 
 COLONNES = [  # (titre, clé ou fonction, largeur)
     ("Priorité", "priorite", 9),
@@ -25,13 +24,14 @@ COLONNES = [  # (titre, clé ou fonction, largeur)
     ("Secteur", "secteur", 20),
     ("Effectif", "effectif", 15),
     ("Dirigeant", "dirigeant", 22),
+    ("Mobile", "mobile", 16),
     ("Téléphone", "telephone", 16),
     ("E-mail", "email", 30),
     ("Site web", "site", 28),
     ("Adresse", "adresse", 40),
-    ("Statut", "statut", 22),
+    ("Statut de l'appel", lambda p: p.get("statut") or statuts.DEFAUT, 24),
+    ("Remarque", "notes", 45),
     ("Rappel le", "rappel_le", 12),
-    ("Notes", "notes", 40),
     ("E-mail envoyé le", "email_envoye_le", 18),
     ("Accroche d'appel", lambda p: messages.accroche_appel(p), 70),
     ("Raison sociale", "raison_sociale", 30),
@@ -55,6 +55,8 @@ def relire_suivi(chemin, conn):
     ws = wb["Prospects"]
     lignes = ws.iter_rows(values_only=True)
     entetes = list(next(lignes))
+    alias = {"Statut de l'appel": "Statut", "Remarque": "Notes"}
+    entetes = [alias.get(e, e) for e in entetes]
     idx = {t: entetes.index(t) for t in ("SIRET", "Statut", "Rappel le", "Notes") if t in entetes}
     if "SIRET" not in idx:
         return 0
@@ -97,6 +99,7 @@ def ecrire(chemin, prospects, script_appel):
         cell.alignment = Alignment(vertical="center", wrap_text=True)
     titres = [c[0] for c in COLONNES]
     col_tel = titres.index("Téléphone") + 1
+    col_mob = titres.index("Mobile") + 1
     col_site = titres.index("Site web") + 1
     col_mail = titres.index("E-mail") + 1
     for i, p in enumerate(prospects, start=2):
@@ -104,6 +107,9 @@ def ecrire(chemin, prospects, script_appel):
         ws.cell(i, 1).fill = fill
         if p.get("telephone"):
             ws.cell(i, col_tel).hyperlink = "tel:" + p["telephone"].replace(" ", "")
+        if p.get("mobile"):
+            ws.cell(i, col_mob).hyperlink = "tel:" + p["mobile"].replace(" ", "")
+            ws.cell(i, col_mob).font = Font(bold=True, color="0A53A8")
         if p.get("site"):
             s = p["site"] if p["site"].startswith("http") else "http://" + p["site"]
             ws.cell(i, col_site).hyperlink = s
@@ -114,10 +120,33 @@ def ecrire(chemin, prospects, script_appel):
     ws.freeze_panes = "D2"
     ws.auto_filter.ref = ws.dimensions
 
-    col_statut = get_column_letter(titres.index("Statut") + 1)
-    dv = DataValidation(type="list", formula1='"' + ",".join(STATUTS) + '"', allow_blank=True)
+    col_statut = get_column_letter(titres.index("Statut de l'appel") + 1)
+    derniere = max(len(prospects) + 1, 2)
+    plage = f"{col_statut}2:{col_statut}{derniere}"
+    dv = DataValidation(type="list", formula1='"' + ",".join(STATUTS) + '"', allow_blank=True,
+                        showErrorMessage=True, errorTitle="Statut inconnu",
+                        error="Choisis un statut dans la liste.")
     ws.add_data_validation(dv)
-    dv.add(f"{col_statut}2:{col_statut}{max(len(prospects) + 1, 2)}")
+    dv.add(plage)
+    # une couleur par statut, comme dans l'application (suit les changements faits dans Excel)
+    for nom, (fond, texte) in statuts.COULEURS.items():
+        ws.conditional_formatting.add(plage, FormulaRule(
+            formula=[f'{col_statut}2="{nom}"'], stopIfTrue=True,
+            fill=PatternFill("solid", fgColor=fond, bgColor=fond),
+            font=Font(color=texte, bold=True)))
+    # onglet « Mobiles » : uniquement les prospects avec un 06 / 07
+    mob = wb.create_sheet("Mobiles", 1)
+    mob.append(["Priorité", "Entreprise", "Secteur", "Dirigeant", "Mobile", "Statut de l'appel", "Remarque", "SIRET"])
+    for p in [p for p in prospects if p.get("mobile")]:
+        mob.append([p.get("priorite"), p.get("entreprise"), p.get("secteur"), p.get("dirigeant"),
+                    p.get("mobile"), p.get("statut") or statuts.DEFAUT, p.get("notes") or "", p.get("siret")])
+    for cell in mob[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = entete_fill
+    for col, w in zip("ABCDEFGH", (9, 32, 22, 24, 16, 24, 40, 16)):
+        mob.column_dimensions[col].width = w
+    mob.freeze_panes = "B2"
+    mob.auto_filter.ref = mob.dimensions
 
     # --- Statistiques ---
     st = wb.create_sheet("Statistiques")

@@ -20,7 +20,7 @@ from urllib.parse import parse_qs, quote, unquote, urlparse
 
 import config
 import envoyer_emails
-from prospection import base, chemins, comptes, export, messages
+from prospection import base, chemins, comptes, export, messages, statuts
 
 ICI = os.path.dirname(os.path.abspath(__file__))
 PORT = 8765
@@ -239,7 +239,8 @@ class Gestionnaire(BaseHTTPRequestHandler):
             self._json({
                 "compte": {"identifiant": self.compte, "nom": comptes.nom(self.compte)},
                 "secteurs": [{"nom": k, "actif": v.get("actif", False)} for k, v in config.SECTEURS.items()],
-                "zones": zones(), "statuts": export.STATUTS,
+                "zones": zones(), "statuts": statuts.LISTE, "couleurs_statuts": statuts.COULEURS,
+                "statut_defaut": statuts.DEFAUT, "statuts_termines": sorted(statuts.TERMINES),
                 "parametres": lire_parametres(), "envois": stats_envois(),
             })
         elif chemin == "/api/prospects":

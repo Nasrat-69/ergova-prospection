@@ -113,6 +113,18 @@ details{margin-top:14px}details summary{cursor:pointer;font-weight:600;padding:6
 .dialogue{position:fixed;inset:0;display:none;place-items:center;z-index:70;background:rgba(10,15,25,.45)}
 .dialogue.visible{display:grid}
 .dialogue .carte{max-width:440px;width:calc(100% - 32px)}
+/* Suivi : statut coloré et remarque modifiables dans le tableau */
+.sel-statut{appearance:none;-webkit-appearance:none;width:auto;min-width:150px;border:0;border-radius:14px;padding:5px 28px 5px 12px;font-weight:600;font-size:13px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%)!important;
+  background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%!important;background-size:5px 5px,5px 5px!important;background-repeat:no-repeat!important}
+.sel-statut option{background:var(--surface);color:var(--text);font-weight:500}
+.sel-statut:focus{box-shadow:0 0 0 3px var(--primary-soft)}
+.remarque{min-width:190px;padding:6px 9px!important;font-size:13px;background:transparent!important;border-color:transparent!important}
+.remarque:hover{border-color:var(--border)!important}
+.remarque:focus{background:var(--surface2)!important;border-color:var(--primary)!important}
+.lien-mobile{font-weight:700;text-decoration:none}
+.case-mobile{color:var(--primary);font-weight:600}
+.table-suivi td{padding:7px 10px}
 .ecran-connexion{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-items:center;padding:16px;overflow:auto}
 .ecran-connexion .carte{width:100%;max-width:400px}
 .ecran-connexion h1{display:flex;align-items:center;gap:10px;margin-bottom:6px}
@@ -218,15 +230,16 @@ details{margin-top:14px}details summary{cursor:pointer;font-weight:600;padding:6
     <select id="fSecteur"><option value="">Tous les secteurs</option></select>
     <select id="fPrio"><option value="">Toutes priorités</option><option>A</option><option>B</option><option>C</option></select>
     <select id="fStatut"><option value="">Tous les statuts</option><option value="__rappel">À rappeler aujourd'hui</option></select>
+    <label class="case case-mobile"><input type="checkbox" id="fMobile"> 📱 Mobiles uniquement</label>
     <label class="case"><input type="checkbox" id="fTel"> Avec téléphone</label>
     <label class="case"><input type="checkbox" id="fMail"> Avec e-mail</label>
   </div>
   <div class="table-boite">
-    <table>
+    <table class="table-suivi">
       <thead><tr>
         <th data-tri="priorite">Prio.</th><th data-tri="entreprise">Entreprise</th><th data-tri="dirigeant">Dirigeant</th>
-        <th data-tri="tranche">Effectif</th><th data-tri="telephone">Téléphone</th><th data-tri="email">E-mail</th>
-        <th data-tri="statut">Statut</th><th data-tri="rappel_le">Rappel</th>
+        <th data-tri="mobile">📱 Mobile</th><th data-tri="telephone">Téléphone</th>
+        <th data-tri="statut">Statut de l'appel</th><th data-tri="notes">Remarque</th><th data-tri="rappel_le">Rappel</th>
       </tr></thead>
       <tbody id="corpsTable"></tbody>
     </table>
@@ -472,7 +485,20 @@ async function suivreTache(){
 }
 
 /* ---------- Prospects ---------- */
-const STYLE_STATUT = s => /Intéressé|Formulaire|Client/.test(s) ? "st-bon" : /Rappeler|Messagerie|pas joignable/.test(s) ? "st-attente" : /Pas |STOP/.test(s) ? "st-non" : /E-mail envoyé/.test(s) ? "st-envoye" : "";
+/* Statuts colorés (mêmes couleurs que l'Excel) */
+const DEFAUT = () => ETAT.statut_defaut || "À appeler";
+const couleurStatut = s => { const c = (ETAT.couleurs_statuts||{})[s] || ["E8EAED","3C4043"]; return `background:#${c[0]};color:#${c[1]}`; };
+const termine = s => (ETAT.statuts_termines||[]).includes(s);
+function selectStatut(p, id){
+  const v = p.statut || DEFAUT();
+  return `<select class="sel-statut" ${id?`id="${id}"`:""} data-siret="${esc(p.siret)}" style="${couleurStatut(v)}" aria-label="Statut de l'appel">
+    ${ETAT.statuts.map(s=>`<option ${s===v?"selected":""}>${esc(s)}</option>`).join("")}</select>`;
+}
+async function enregistrerSuivi(siret, champs){
+  const p = PROSPECTS.find(x=>x.siret===siret);
+  try{ await api("/api/suivi", {siret, ...champs}); if(p) Object.assign(p, champs); toast("Enregistré ✓"); }
+  catch(e){ toast(e.message); }
+}
 async function chargerProspects(){
   if(!ETAT.zones) await chargerEtat();
   const zone = $("#zone").value;
@@ -480,17 +506,18 @@ async function chargerProspects(){
   afficherProspects();
 }
 $("#zone").onchange = chargerProspects;
-["#fRecherche","#fSecteur","#fPrio","#fStatut","#fTel","#fMail"].forEach(s=>$(s).addEventListener("input", afficherProspects));
+["#fRecherche","#fSecteur","#fPrio","#fStatut","#fTel","#fMail","#fMobile"].forEach(s=>$(s).addEventListener("input", afficherProspects));
 $$("th[data-tri]").forEach(th=>th.onclick=()=>{ const c=th.dataset.tri; TRI = {cle:c, sens: TRI.cle===c ? -TRI.sens : 1}; afficherProspects(); });
 
 function filtrer(){
   const q = $("#fRecherche").value.toLowerCase().trim(), sect=$("#fSecteur").value, pr=$("#fPrio").value, st=$("#fStatut").value;
   return PROSPECTS.filter(p=>{
-    if(q && ![p.entreprise,p.dirigeant,p.raison_sociale,p.adresse,p.email,p.telephone].join(" ").toLowerCase().includes(q)) return false;
+    if(q && ![p.entreprise,p.dirigeant,p.raison_sociale,p.adresse,p.email,p.telephone,p.mobile,p.notes].join(" ").toLowerCase().includes(q)) return false;
     if(sect && p.secteur!==sect) return false;
     if(pr && p.priorite!==pr) return false;
-    if(st==="__rappel"){ if(!p.rappel_le || p.rappel_le>aujourdhui()) return false; }
-    else if(st && p.statut!==st) return false;
+    if(st==="__rappel"){ if(!p.rappel_le || p.rappel_le>aujourdhui() || termine(p.statut)) return false; }
+    else if(st && (p.statut||DEFAUT())!==st) return false;
+    if($("#fMobile").checked && !p.mobile) return false;
     if($("#fTel").checked && !p.telephone) return false;
     if($("#fMail").checked && !p.email) return false;
     return true;
@@ -498,32 +525,46 @@ function filtrer(){
 }
 function afficherProspects(){
   const tous = PROSPECTS, n = k => tous.filter(k).length;
-  const rappels = n(p=>p.rappel_le && p.rappel_le<=aujourdhui() && !/Pas |STOP|Client/.test(p.statut||""));
+  const rappels = n(p=>p.rappel_le && p.rappel_le<=aujourdhui() && !termine(p.statut));
   $("#pastilleRappels").hidden = !rappels; $("#pastilleRappels").textContent = rappels;
   $("#tuiles").innerHTML = `
     <div class="tuile"><div class="val">${tous.length}</div><div class="lib">prospects</div></div>
+    <div class="tuile"><div class="val" style="color:var(--primary)">${n(p=>p.mobile)}</div><div class="lib">📱 avec mobile</div></div>
     <div class="tuile"><div class="val">${n(p=>p.telephone)}</div><div class="lib">avec téléphone</div></div>
     <div class="tuile"><div class="val">${n(p=>p.email)}</div><div class="lib">avec e-mail</div></div>
-    <div class="tuile"><div class="val">${n(p=>p.priorite==="A")}</div><div class="lib">priorité A</div></div>
-    <div class="tuile"><div class="val">${n(p=>p.statut && p.statut!=="À contacter")}</div><div class="lib">déjà contactés</div></div>
-    <div class="tuile"><div class="val" style="color:var(--ok)">${n(p=>/Intéressé|Formulaire|Client/.test(p.statut||""))}</div><div class="lib">intéressés / clients</div></div>`;
+    <div class="tuile"><div class="val">${n(p=>(p.statut||DEFAUT())!==DEFAUT())}</div><div class="lib">déjà contactés</div></div>
+    <div class="tuile"><div class="val" style="color:var(--ok)">${n(p=>/Intéressé|RDV pris|Client/.test(p.statut||""))}</div><div class="lib">intéressés / RDV / clients</div></div>`;
   let liste = filtrer();
   const cle = TRI.cle, num = ["score","tranche"].includes(cle);
   liste.sort((a,b)=>{ let x=a[cle]??"", y=b[cle]??""; if(num){x=+x||0;y=+y||0;} else {x=String(x).toLowerCase(); y=String(y).toLowerCase();} return (x>y?1:x<y?-1:0)*TRI.sens; });
   $("#corpsTable").innerHTML = liste.map(p=>`
     <tr data-siret="${esc(p.siret)}" class="${CHOISI===p.siret?"choisi":""}">
       <td><span class="badge prio-${esc(p.priorite)}">${esc(p.priorite)}</span></td>
-      <td><div class="nom">${esc(p.entreprise)}</div><div class="petit-gris">${esc(p.secteur)} · ${esc((p.ville||"").toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase()))}</div></td>
+      <td><div class="nom">${esc(p.entreprise)}</div><div class="petit-gris">${esc(p.secteur)} · ${esc(p.effectif)}${p.email?" · ✉":""}</div></td>
       <td>${esc(p.dirigeant)||'<span class="petit-gris">—</span>'}</td>
-      <td class="petit-gris">${esc(p.effectif)}</td>
-      <td style="white-space:nowrap">${p.telephone?`<a href="tel:${esc(p.telephone.replace(/\s/g,""))}" onclick="event.stopPropagation()">${esc(p.telephone)}</a>`:'<span class="petit-gris">—</span>'}</td>
-      <td>${p.email?esc(p.email):'<span class="petit-gris">—</span>'}</td>
-      <td><span class="statut ${STYLE_STATUT(p.statut||"")}">${esc(p.statut||"À contacter")}</span></td>
-      <td class="petit-gris" style="white-space:nowrap;${p.rappel_le && p.rappel_le<=aujourdhui()?"color:var(--bad);font-weight:600":""}">${esc((p.rappel_le||"").split("-").reverse().join("/"))}</td>
+      <td style="white-space:nowrap">${p.mobile?`<a class="lien-mobile" href="tel:${esc(p.mobile.replace(/\s/g,""))}" data-stop>${esc(p.mobile)}</a>`:'<span class="petit-gris">—</span>'}</td>
+      <td style="white-space:nowrap">${p.telephone && p.telephone!==p.mobile?`<a href="tel:${esc(p.telephone.replace(/\s/g,""))}" data-stop>${esc(p.telephone)}</a>`:'<span class="petit-gris">—</span>'}</td>
+      <td data-stop>${selectStatut(p)}</td>
+      <td data-stop><input type="text" class="remarque" data-siret="${esc(p.siret)}" value="${esc(p.notes||"")}" placeholder="Ajouter une remarque…" aria-label="Remarque"></td>
+      <td class="petit-gris" style="white-space:nowrap;${p.rappel_le && p.rappel_le<=aujourdhui() && !termine(p.statut)?"color:var(--bad);font-weight:600":""}">${esc((p.rappel_le||"").split("-").reverse().join("/"))}</td>
     </tr>`).join("");
   $("#videTable").hidden = PROSPECTS.length>0;
-  $("#compteur").textContent = PROSPECTS.length ? `${liste.length} affiché(s) sur ${PROSPECTS.length}` : "";
-  $$("#corpsTable tr").forEach(tr=>tr.onclick=()=>ouvrirFiche(tr.dataset.siret));
+  $("#compteur").textContent = PROSPECTS.length ? `${liste.length} affiché(s) sur ${PROSPECTS.length} · le statut et la remarque se modifient directement dans le tableau` : "";
+  $$("#corpsTable tr").forEach(tr=>tr.onclick=e=>{ if(!e.target.closest("[data-stop]")) ouvrirFiche(tr.dataset.siret); });
+  $$("#corpsTable .sel-statut").forEach(sel=>sel.onchange=()=>{
+    sel.style.cssText = couleurStatut(sel.value);
+    enregistrerSuivi(sel.dataset.siret, {statut: sel.value}).then(()=>{ sel.blur(); afficherTuilesSeules(); });
+  });
+  $$("#corpsTable .remarque").forEach(inp=>{
+    inp.onkeydown = e=>{ if(e.key==="Enter") inp.blur(); };
+    inp.onchange = ()=>enregistrerSuivi(inp.dataset.siret, {notes: inp.value});
+  });
+}
+/* met à jour les compteurs sans reconstruire le tableau (garde le focus) */
+function afficherTuilesSeules(){
+  const focus = document.activeElement;
+  if(focus && focus.closest && focus.closest("#corpsTable")) return;
+  afficherProspects();
 }
 $("#btnExcel").onclick = async ()=>{ const z=$("#zone").value; if(!z) return; try{ await api("/api/excel",{zone:z}); toast("Excel s'ouvre sur ton PC (regarde la barre des tâches)"); }catch(e){ toast(e.message); } };
 $("#btnTelecharger").onclick = e=>{
@@ -545,7 +586,8 @@ async function ouvrirFiche(siret){
   const site = p.site ? (p.site.startsWith("http")?p.site:"http://"+p.site) : "";
   $("#ficheCorps").innerHTML = `
     <div class="actions">
-      ${p.telephone?`<a class="btn principal petit" href="tel:${esc(p.telephone.replace(/\s/g,""))}">📞 ${esc(p.telephone)}</a>`:""}
+      ${p.mobile?`<a class="btn principal petit" href="tel:${esc(p.mobile.replace(/\s/g,""))}">📱 ${esc(p.mobile)}</a>`:""}
+      ${p.telephone && p.telephone!==p.mobile?`<a class="btn ${p.mobile?"":"principal "}petit" href="tel:${esc(p.telephone.replace(/\s/g,""))}">📞 ${esc(p.telephone)}</a>`:""}
       ${p.email?`<a class="btn petit" href="mailto:${esc(p.email)}">✉ E-mail</a>`:""}
       ${p.email && !p.email_envoye_le?`<button class="btn petit" id="ajouterEnvoi">➕ Ajouter à l'envoi</button>`:""}
       ${site?`<a class="btn petit" href="${esc(site)}" target="_blank" rel="noopener">🌐 Site</a>`:""}
@@ -565,11 +607,11 @@ async function ouvrirFiche(siret){
     <div class="actions"><button class="btn petit" id="copier">Copier l'accroche</button></div>
     <h2 style="margin-top:18px">Suivi</h2>
     <div class="ligne">
-      <div><label class="champ" for="fStatutFiche">Statut</label><select id="fStatutFiche">${ETAT.statuts.map(s=>`<option ${s===(p.statut||"À contacter")?"selected":""}>${esc(s)}</option>`).join("")}</select></div>
+      <div><label class="champ" for="fStatutFiche">Statut de l'appel</label>${selectStatut(p, "fStatutFiche")}</div>
       <div style="max-width:170px"><label class="champ" for="fRappel">Rappeler le</label><input type="date" id="fRappel" value="${esc(p.rappel_le||"")}"></div>
     </div>
     <div class="espace"></div>
-    <label class="champ" for="fNotes">Notes</label>
+    <label class="champ" for="fNotes">Remarque</label>
     <textarea id="fNotes" placeholder="ex : 6 salariés, DUERP de 2019, référent possible : Karim (chef d'équipe)">${esc(p.notes||"")}</textarea>
     <div class="actions">
       <button class="btn principal" id="enregistrer">Enregistrer</button>
@@ -580,7 +622,8 @@ async function ouvrirFiche(siret){
   const aj = $("#ajouterEnvoi");
   if(aj) aj.onclick = ()=>{ COCHES.add(p.siret); toast(`${p.entreprise} ajouté à l'envoi (${COCHES.size} sélectionné(s)). Onglet E-mails pour envoyer.`); };
   $("#copier").onclick=()=>{ navigator.clipboard?.writeText(p.accroche); toast("Accroche copiée"); };
-  $$("[data-rapide]").forEach(b=>b.onclick=()=>{ const d=new Date(); d.setDate(d.getDate()+ +b.dataset.rapide); $("#fRappel").value=d.toISOString().slice(0,10); if($("#fStatutFiche").value==="À contacter") $("#fStatutFiche").value="Rappeler"; });
+  $$("[data-rapide]").forEach(b=>b.onclick=()=>{ const d=new Date(); d.setDate(d.getDate()+ +b.dataset.rapide); $("#fRappel").value=d.toISOString().slice(0,10); if($("#fStatutFiche").value===DEFAUT()){ $("#fStatutFiche").value="Rappeler"; $("#fStatutFiche").style.cssText=couleurStatut("Rappeler"); } });
+  $("#fStatutFiche").onchange = e=>{ e.target.style.cssText = couleurStatut(e.target.value); };
   $("#enregistrer").onclick=async()=>{
     const maj = {siret:p.siret, statut:$("#fStatutFiche").value, rappel_le:$("#fRappel").value, notes:$("#fNotes").value};
     try{ await api("/api/suivi", maj); Object.assign(p, maj); afficherProspects(); toast("Enregistré ✓"); }catch(e){ toast(e.message); }
